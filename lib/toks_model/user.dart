@@ -1,9 +1,5 @@
 import 'dart:convert';
 
-User userFromJson(String str) => User.fromJson(json.decode(str));
-
-String userToJson(User data) => json.encode(data.toJson());
-
 class User {
   String firstName;
   String lastName;
@@ -29,16 +25,16 @@ class User {
       this.securityKey});
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        firstName: json['firstName'],
-        lastName: json['lastName'],
-        password: json['password'],
-        emailAddress: json['emailAddress'],
-        phoneNumber: json['phoneNumber'],
-        profilePhoto: json['profilePhoto'],
-        role: json['role'],
-        securityKey: json['securityKey'],
-        dob: json['dob'],
-        objectId: json['objectId'],
+        firstName: json['firstName'] as String,
+        lastName: json['lastName'] as String,
+        password: json['password']as String,
+        emailAddress: json['emailAddress']as String,
+        phoneNumber: json['phoneNumber']as String,
+        profilePhoto: json['profilePhoto']as String,
+        role: json['role']as String,
+        securityKey: json['securityKey']as String,
+        dob: json['dob']as String,
+        objectId: json['objectId']as String,
       );
 
   Map<String, dynamic> toJson() => {
@@ -53,11 +49,21 @@ class User {
         'securityKey': securityKey,
       };
 
-  String get initials {
-    final name1 = firstName.split('');
-    final name2 = lastName.split('');
-    name1[0].substring(0, 1);
-    name2[0].substring(0, 1);
-    return 'name1 + name2'.toString().toUpperCase();
+  @override
+  String toString() {
+    return 'User{firstName: $firstName, lastName: $lastName, password: $password,emailAddress: $emailAddress, phoneNumber: $phoneNumber, profilePhoto: $profilePhoto,role: $role, securityKey: $securityKey, objectId: $objectId}';
   }
+}
+
+// List<User> userFromJson(String jsonData) {
+//   final data = json.decode(jsonData);
+//   return List<User>.from(data.map((item) => User.fromJson(item)));
+// }
+
+List<User> userFromJson(String str) =>
+    List<User>.from(json.decode(str).map((x) => User.fromJson(x)));
+
+String userToJson(User data) {
+  final jsonData = data.toJson();
+  return json.encode(jsonData);
 }
