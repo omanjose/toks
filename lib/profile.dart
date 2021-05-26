@@ -16,7 +16,7 @@ class _ProfilePageState extends State<ProfilePage> {
   FlutterSecureStorage storage = FlutterSecureStorage();
 
   UserDialog usd;
-  User userModel = User();
+  User userModel = new User();
 
   getUser() async {
     String token = await storage.read(key: "token");
@@ -30,17 +30,14 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
     var jsonResponse = json.decode(response.body);
+    // print(jsonResponse);
     setState(() {
-      userModel = User.fromJson(jsonResponse);
+      userModel = User.fromJson(jsonResponse.responseData);
       print(userModel);
+      //  userModel.fromJson(jsonResponse.responseData);
+      // print(userModel);
       progressDialog.dismiss();
     });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    getUser();
   }
 
   @override
@@ -48,6 +45,11 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     getUser();
   }
+  //  @override
+  // void dispose() {
+  //   super.dispose();
+  //   getUser();
+  // }
 
   ArsProgressDialog progressDialog;
   @override
@@ -102,54 +104,60 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.blueGrey),
-                        SizedBox(width: 10),
-                        Text(
-                          userModel.firstName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                child: Container(
+                  margin: EdgeInsets.only(top: 70),
+                  padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Center(
+                        child: Row(
+                          children: [
+                            Icon(Icons.person, color: Colors.blueGrey),
+                            SizedBox(width: 10),
+                            Text(
+                              "${userModel.firstName}",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(
+                        thickness: 0.8,
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.mail, color: Colors.blueGrey),
+                          SizedBox(width: 10),
+                          Text(
+                            "${userModel.emailAddress}",
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ),
-                      ],
-                    ),
-                    Divider(
-                      thickness: 0.8,
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.mail, color: Colors.blueGrey),
-                        SizedBox(width: 10),
-                        Text(
-                          userModel.emailAddress,
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.phone, color: Colors.blueGrey),
-                        SizedBox(width: 10),
-                        Text(
-                          userModel.phoneNumber,
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Any thing else...",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.phone, color: Colors.blueGrey),
+                          SizedBox(width: 10),
+                          Text(
+                            "${userModel.phoneNumber}",
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Any thing else...",
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
                 ),
               )
             ],

@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project2/api_controller/networkHandler.dart';
 import 'package:project2/dashboard/admin_dashboard.dart';
+import 'package:project2/password_recovery.dart';
 import 'package:project2/signup.dart';
 import 'package:project2/toks_model/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -356,8 +357,9 @@ class _LoginPageState extends State<LoginPage> {
                                 padding: const EdgeInsets.all(5.0),
                                 child: TextFormField(
                                   //style: TextStyle(color: Colors.grey),
-                                  maxLength: 35,
+                               //   maxLength: 35,
                                   textInputAction: TextInputAction.next,
+                                  
                                   keyboardType: TextInputType.visiblePassword,
                                   controller: passwordCtrl,
                                   decoration: InputDecoration(
@@ -402,7 +404,10 @@ class _LoginPageState extends State<LoginPage> {
                                 alignment: Alignment(1.0, 0.0),
                                 padding: EdgeInsets.only(right: 8.0),
                                 child: InkWell(
-                                  onTap: () => passwordRecovering(context),
+                                  onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => PasswordRecovery())),
                                   child: Text(
                                     'Forgot Password',
                                     style: TextStyle(
@@ -461,181 +466,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<bool> _onBackButton() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => LoginPage()));
     return Future.value(false);
-  }
-
-  passwordRecovering(BuildContext context) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Stack(
-              clipBehavior: Clip.hardEdge,
-              children: <Widget>[
-                Positioned(
-                  right: -40.0,
-                  top: -40.0,
-                  child: InkResponse(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: CircleAvatar(
-                      child: Icon(Icons.close, color: Colors.black),
-                      // backgroundColor: Colors.red,
-                    ),
-                  ),
-                ),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.all(4.0),
-                        child: TextFormField(),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(4.0),
-                        child: _recoverEmailField(),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: _submitPasswordReocery(),
-                      )
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        });
-  }
-
-  recoveringPassword() async {
-    setState(() {
-      progressDialog.show();
-    });
-    var listener =
-        DataConnectionChecker().onStatusChange.listen((status) async {
-      switch (status) {
-        case DataConnectionStatus.connected:
-          print('Data connection is available.');
-
-          Map<String, String> data = {
-            "emailAddress": passwordRecoveryText.text,
-          };
-          var response = await networkHandler
-              .post("/api/user/forgot-password", data)
-              .timeout(Duration(seconds: 120), onTimeout: () {
-            setState(() {
-              show(
-                  context,
-                  "Poor network connection",
-                  'The connection has timed out, please try again!',
-                  Icon(Icons.restore));
-              progressDialog.dismiss();
-              Navigator.pop(context);
-            });
-            throw TimeoutException(
-                'The connection has timed out, please try again');
-          });
-
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            print(response.statusCode.toString());
-            setState(() {
-              show(
-                  context,
-                  "Information",
-                  'Check your email for to recover your account!',
-                  Icon(Icons.restore));
-              progressDialog.dismiss();
-              Navigator.pop(context);
-            });
-            Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
-                (route) => false);
-          } else {
-            setState(() {
-              isLoading = false;
-              progressDialog.dismiss();
-              print(response.statusCode.toString());
-              Navigator.pop(context);
-              show(
-                  context,
-                  "Failed",
-                  "Please try again" + response.statusCode.toString(),
-                  Icon(Icons.error));
-            });
-          }
-          break;
-        case DataConnectionStatus.disconnected:
-          setState(() {
-            isLoading = false;
-            progressDialog.dismiss();
-            Navigator.pop(context);
-            show(context, "Error!", "Check your network connection.",
-                Icon(Icons.error));
-            print('Check your network connection.');
-          });
-          break;
-      }
-    });
-    await Future.delayed(Duration(seconds: 30));
-    await listener.cancel();
-  }
-
-  Widget _recoverEmailField() {
-    return TextFormField(
-      // style: TextStyle(color: Colors.grey),
-      decoration: InputDecoration(
-          suffixIcon: Icon(Icons.mail),
-          alignLabelWithHint: true,
-          hintText: 'you@example.com',
-          labelText: 'Email',
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue[700]))),
-      textInputAction: TextInputAction.next,
-      validator: (value) =>
-          EmailValidator.validate(value) ? null : "Invalid Email Address",
-      // onSaved: (value) {
-      //   _userEmail = value;
-      // },
-      keyboardType: TextInputType.emailAddress,
-      controller: passwordRecoveryText,
-    );
-  }
-
-  _submitPasswordReocery() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-              onPressed: () {
-                if (!_formKey.currentState.validate()) {
-                  return;
-                }
-
-                formKey.currentState.save();
-                recoveringPassword();
-                setState(() {
-                  progressDialog.show();
-                });
-              },
-              child: Text(
-                'Recover password',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                primary: Colors.green,
-                onPrimary: Colors.white,
-                // padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-              )),
-        ),
-      ],
-    );
   }
 
   void show(BuildContext context, String title, String text, Icon icon) {

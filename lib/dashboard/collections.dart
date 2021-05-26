@@ -15,7 +15,7 @@ class CollectionsPage extends StatefulWidget {
 
 class _CollectionsPageState extends State<CollectionsPage> {
   final storage = new FlutterSecureStorage();
-  User user = new User();
+  User user;
   NetworkHandler networkHandler;
   var fname, lname, userPic, email, cname, clname, cPic, cemail, cInitials = "";
   Widget boardPic;
@@ -301,8 +301,8 @@ class _CollectionsPageState extends State<CollectionsPage> {
   List<charts.Series<Items, String>> _seriesPieData;
   _generateData() {
     var pieData = [
-      new Items('Enabled Users', 500.1, Colors.green[900]),
-      new Items('Disabled Users', 92.8, Colors.grey[600]),
+      new Items('Enabled Users', 500.1, Colors.teal),
+      new Items('Disabled Users', 92.8, Colors.amber[600]),
       new Items('Admin', 25.5, Colors.blue),
     ];
 

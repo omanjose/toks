@@ -152,11 +152,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
                 child: InkWell(
                     child: Text('Logout'),
                     onTap: () {
-                      usd.handleUserDialog(
-                          context,
-                          "You will be signed out of the application",
-                          logout,
-                          () => Navigator.of(context).pop());
+                      logout();
                     }),
               ),
               PopupMenuItem(

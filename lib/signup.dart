@@ -719,55 +719,6 @@ class _SignUpPageState extends State<SignUpPage> {
     )..show();
   }
 
-  // ignore: missing_return
-  // submitUser() async {
-  //   progressDialog.show();
-
-  //   String token = await storage.read(key: "token");
-  //   var uri = Uri.parse("http://ktoks.herokuapp.com/api/user/signup");
-  //   var request = http.MultipartRequest('PATCH', uri);
-  //   Map<String, String> headers = {
-  //     // "content-type": "multipart/form-data",
-  //     "content-type": "application/json",
-  //     "Authorization": "Bearer $token"
-  //   };
-  //   request.headers.addAll(headers);
-  //   request.fields["confirmPassword"] = _confirmPasswordController.text;
-  //   request.fields["emailAddress"] = _emailController.text;
-  //   request.fields["firstName"] = _firstameController.text;
-  //   request.fields["lastName"] = _lastameController.text;
-  //   request.fields["password"] = _passwordController.text;
-  //   request.fields["phoneNumber"] = _phoneController.text;
-  //   request.fields["role"] = fixedrole;
-  //   if (_imageFile.path != null) {
-  //     request.files.add(
-  //         await http.MultipartFile.fromPath('profilePhoto', _imageFile.path));
-  //   }
-  //   request.send().then(
-  //     (response) {
-  //       if (response.statusCode == 200 || response.statusCode == 201) {
-  //         show(context, "Successful", "Account registration is successful",
-  //             Icon(Icons.notification_important));
-  //         progressDialog.dismiss();
-  //         Navigator.of(context).pushAndRemoveUntil(
-  //             MaterialPageRoute(builder: (context) => LoginPage()),
-  //             (route) => false);
-  //         return response;
-  //       } else {
-  //         setState(() {
-  //           progressDialog.dismiss();
-  //           show(context, "Failed", "Some error occured", Icon(Icons.error));
-  //         });
-
-  //         Navigator.of(context).pushAndRemoveUntil(
-  //             MaterialPageRoute(builder: (context) => LoginPage()),
-  //             (route) => false);
-  //       }
-  //       return response;
-  //     },
-  //   );
-  // }
-
   submitUser() async {
     progressDialog.show();
 
@@ -776,9 +727,14 @@ class _SignUpPageState extends State<SignUpPage> {
       switch (status) {
         case DataConnectionStatus.connected:
           print('Data connection is available.');
-          final bytes = _imageFile.readAsBytesSync();
-          String _img64 = base64Encode(bytes);
-          print("the converted image " + _img64);
+          if (_imageFile == null) return;
+          String base64Image = base64Encode(_imageFile.readAsBytesSync());
+          String fileName = _imageFile.path.split("/").last;
+
+          // final bytes = _imageFile.readAsBytesSync();
+          // String _img64 = base64Encode(bytes);
+          print("file name " + fileName);
+          print("the converted image " + base64Image);
           Map<String, String> data = {
             "confirmPassword": _confirmPasswordController.text,
             "emailAddress": _emailController.text,
@@ -786,9 +742,9 @@ class _SignUpPageState extends State<SignUpPage> {
             "lastName": _lastameController.text,
             "password": _passwordController.text,
             "phoneNumber": _phoneController.text,
-            "profilePhotoUrl": _img64,
+            "profilePhotoUrl": base64Image,
             "role": fixedrole,
-            "securityKey": null,
+            // "securityKey": null,
           };
           var response = await networkHandler
               .post("/api/user/signup", data)
@@ -831,7 +787,7 @@ class _SignUpPageState extends State<SignUpPage> {
               print(response.body);
               show(
                   context,
-                  "Failed",
+                  "Unsuccessful",
                   "Failed to register" + response.statusCode.toString(),
                   Icon(Icons.error));
             });

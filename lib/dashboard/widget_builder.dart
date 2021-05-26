@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// import 'package:project2/toks_model/person.dart';
 import 'package:project2/toks_model/user.dart';
 
 import 'package:project2/utils/userHandler.dart';
@@ -21,9 +22,9 @@ class _WidgetReportListState extends State<WidgetReportList> {
   FlutterSecureStorage storage = new FlutterSecureStorage();
 
   UserDialog userDialog;
-  User userModel = User();
+  User userModel;
 
-   _fetchData() async {
+  _fetchData() async {
     String token = await storage.read(key: "token");
 
     http.Response response = await http.get(
@@ -34,11 +35,13 @@ class _WidgetReportListState extends State<WidgetReportList> {
         "Content-type": "application/json",
       },
     );
-   var jsonResponse = json.decode(response.body);
-    setState(() {
-      
-      userModel = jsonResponse['data'];
-    });
+//       var jsonResponse = json.decode(response.body);
+// setState(() {
+//    userModel = User.fromJson(jsonResponse["responseData"]);
+//    print(userModel);
+//         });
+    var jsonData = json.decode(response.body) as Map<String, dynamic>;
+    return jsonData;
   }
 
   @override
@@ -56,23 +59,27 @@ class _WidgetReportListState extends State<WidgetReportList> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done &&
               snapshot.hasData) {
-            //return ShimmerList();
-            List<User> datum = snapshot.data;
+            // Map<String, dynamic> data = jsonDecode(snapshot.data['data']);
+            // new Map<String, dynamic>.from(snapshot.data);
+            print(snapshot.data);
+            // return Text(snapshot.data['firstName']);
+            // List<User> datum = snapshot.data;
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical:8.0, horizontal: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
               child: ListView.builder(
-                itemCount: datum.length,
+                itemCount: snapshot.data.length,
                 itemBuilder: (context, index) {
-                  User user = datum[index];
+                  // User user = datum[index];
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // profilePic,
                       CircleAvatar(
                         radius: 13,
-                        backgroundImage: user.profilePhoto != null
-                            ? NetworkImage(user.profilePhoto)
-                            : Container(),
+                        backgroundImage: snapshot.data['profilePhoto'] != null
+                            ? NetworkImage(snapshot.data['profilePhoto'])
+                            : AssetImage("asset/imageicon.png"),
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -82,7 +89,7 @@ class _WidgetReportListState extends State<WidgetReportList> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              user.firstName + " " + user.lastName,
+                              "${snapshot.data['firstName']}",
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.bold),
@@ -92,15 +99,17 @@ class _WidgetReportListState extends State<WidgetReportList> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  user.emailAddress,
+                                  "${snapshot.data['emailAddress']}",
                                   style: TextStyle(
-                                      fontSize: 12, fontWeight: FontWeight.bold),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  user.phoneNumber,
+                                  "${snapshot.data['phoneNumber']}",
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      fontSize: 12, fontWeight: FontWeight.bold),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -114,9 +123,8 @@ class _WidgetReportListState extends State<WidgetReportList> {
                           icon: Icon(Icons.person_add_disabled_sharp),
                           tooltip: 'Disable user',
                           onPressed: () {
-                            userDialog.handleUserDialog(
-                                context, "This user will temporarily be inactive",
-                                () {
+                            userDialog.handleUserDialog(context,
+                                "This user will temporarily be inactive", () {
                               //callingDisableAPI();
                               Navigator.of(context).pop();
                             }, () {

@@ -95,7 +95,7 @@ class _LandingPageState extends State<LandingPage> {
 
   checkToken() async {
     String token = await storage.read(key: "token");
-    if (token.isNotEmpty) {
+    if (token!= null) {
       checkUserType();
     } else {
       await Future.delayed(Duration(seconds: 3));
