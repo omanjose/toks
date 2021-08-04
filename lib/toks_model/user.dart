@@ -1,114 +1,81 @@
 import 'dart:convert';
 
+User userFromJson(String str) => User.fromJson(json.decode(str));
+
+String userToJson(User data) => json.encode(data.toJson());
+
 class User {
-  String firstName = "";
-  String lastName = "";
-  String password = "";
-  String emailAddress = "";
-  String phoneNumber = "";
-  String profilePhoto = "";
-  String role = "";
-  String securityKey = "";
-  String dob = "";
-  String objectId = "";
+  int id;
+  String firstName;
+  String lastName;
+  String password;
+  String emailAddress;
+  String phoneNumber;
+  String profilePhoto;
+  Role role;
+  String securityKey;
+  String dob;
 
-  User();
+  User(
+      {this.id,
+      this.firstName,
+       this.lastName,
+       this.password,
+       this.emailAddress,
+       this.dob,
+       this.phoneNumber,
+       this.profilePhoto,
+       this.role,
+       this.securityKey});
 
-  // User(
-  //     {this.firstName,
-  //     this.lastName,
-  //     this.password,
-  //     this.emailAddress,
-  //     this.dob,
-  //     this.phoneNumber,
-  //     this.profilePhoto,
-  //     this.role,
-  //     this.objectId,
-  //     this.securityKey});
-
-  // User(fname, lname, password, email, dob, phone, photo, role, objId, seckey) {
-  //   this.firstName = fname;
-  //   this.lastName = lname;
-  //   this.password = password;
-  //   this.emailAddress = email;
-  //   this.dob = dob;
-  //   this.phoneNumber = phone;
-  //   this.profilePhoto = photo;
-  //   this.role = role;
-  //   this.objectId = objId;
-  //   this.securityKey = seckey;
-  // }
-
-  factory User.fromJson(Map<String, dynamic> json) {
-    User user = new User();
-
-    user.firstName = json['firstName'];
-    user.lastName = json['lastName'];
-    user.password = json['password'];
-    user.emailAddress = json['emailAddress'];
-    user.phoneNumber = json['phoneNumber'];
-    user.profilePhoto = json['profilePhoto'];
-    user.role = json['role'];
-    user.securityKey = json['securityKey'];
-    user.dob = json['dob'];
-    user.objectId = json['objectId'];
-
-    return user;
-  }
-
-  // factory User.fromJson(Map<String, dynamic> json) => User(
-  //       firstName: json['firstName'],
-  //       lastName: json['lastName'],
-  //       password: json['password'],
-  //       emailAddress: json['emailAddress'],
-  //       phoneNumber: json['phoneNumber'],
-  //       profilePhoto: json['profilePhoto'],
-  //       role: json['role'],
-  //       securityKey: json['securityKey'],
-  //       dob: json['dob'],
-  //       objectId: json['objectId'],
-  //     );
-
-  // factory User.fromJson(Map<String, dynamic> json) => User(
-  //       firstName: json['firstName'],
-  //       lastName: json['lastName'],
-  //       password: json['password'],
-  //       emailAddress: json['emailAddress'],
-  //       phoneNumber: json['phoneNumber'],
-  //       profilePhoto: json['profilePhoto'],
-  //       role: json['role'],
-  //       securityKey: json['securityKey'],
-  //       dob: json['dob'],
-  //       objectId: json['objectId'],
-  //     );
+  factory User.fromJson(Map<String, dynamic> json) => User(
+        id: json['id'] as int,
+        firstName: json['firstName'] as String,
+        lastName: json['lastName'] as String,
+        password: json['password'] as String,
+        emailAddress: json['emailAddress'] as String,
+        phoneNumber: json['phoneNumber'] as String,
+        profilePhoto: json['profilePhoto'] as String,
+        role: Role.fromJson(json['role']),
+        securityKey: json['securityKey'] as String,
+        dob: json['dob'] as String,
+      );
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'firstName': firstName,
         'lastName': lastName,
         'password': password,
         'emailAddress': emailAddress,
         'dob': dob,
         'phoneNumber': phoneNumber,
-        'role': role,
         'profilePhoto': profilePhoto,
         'securityKey': securityKey,
       };
 
-  @override
-  String toString() {
-    return 'User{firstName: $firstName, lastName: $lastName, password: $password,emailAddress: $emailAddress, phoneNumber: $phoneNumber, profilePhoto: $profilePhoto,role: $role, securityKey: $securityKey, objectId: $objectId}';
-  }
+  
 }
 
-// List<User> userFromJson(String jsonData) {
-//   final data = json.decode(jsonData);
-//   return List<User>.from(data.map((item) => User.fromJson(item)));
-// }
+class Role {
+  Role({
+     this.id,
+     this.name,
+     this.description,
+  });
 
-List<User> userFromJson(String str) =>
-    List<User>.from(json.decode(str).map((x) => User.fromJson(x)));
+  int id;
+  String name;
+  String description;
 
-String userToJson(User data) {
-  final jsonData = data.toJson();
-  return json.encode(jsonData);
+  factory Role.fromJson(Map<String, dynamic> rolejson) => Role(
+        id: rolejson["id"],
+        name: rolejson["name"],
+        description: rolejson["description"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "name": name,
+        "description": description,
+      };
 }

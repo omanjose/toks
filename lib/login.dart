@@ -1,21 +1,15 @@
 import 'dart:async';
-import 'package:achievement_view/achievement_widget.dart';
+import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:convert';
-import 'package:email_validator/email_validator.dart';
-import 'package:data_connection_checker/data_connection_checker.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:project2/api_controller/networkHandler.dart';
 import 'package:project2/dashboard/admin_dashboard.dart';
+import 'package:project2/dashboard/customer_home.dart';
 import 'package:project2/password_recovery.dart';
 import 'package:project2/signup.dart';
 import 'package:project2/toks_model/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dashboard/customer_dashboard.dart';
-import 'package:achievement_view/achievement_view.dart';
-import 'package:ars_progress_dialog/ars_progress_dialog.dart';
 import 'package:flutter/services.dart';
 
 class LoginPage extends StatefulWidget {
@@ -25,56 +19,34 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   NetworkHandler networkHandler = NetworkHandler();
-  User user;
+
+  User userModel = User();
   bool validate = false;
-  final storage = new FlutterSecureStorage();
+
   var userPic, fname, lname, email, userType, name = '';
   final emailCtrl = TextEditingController();
 
   final passwordCtrl = TextEditingController();
   final passwordRecoveryText = TextEditingController();
   final formKey = GlobalKey<FormState>();
-  final _formKey = GlobalKey<FormState>();
-
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  //String _userEmail, _userPassword;
+  FocusNode myFocusNode = new FocusNode();
+  FocusNode myFocusNode2 = new FocusNode();
 
   bool _isObscure = true;
 
-  // checkExistingLogin() async {
-  //   String token = await storage.read(key: "token");
+  _nextFocus(FocusNode focusNode) {
+    FocusScope.of(context).requestFocus(focusNode);
+  }
 
-  //   if (token != null) {
-  //     checkUserType();
-  //   } else {
-  //     return null;
-  //   }
-  // }
-
-  // void checkUserType() async {
-  //   String userType = await storage.read(key: "name");
-  //   if (userType != "CUSTOMER") {
-  //     Navigator.pushAndRemoveUntil(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => AdminDashBoard()),
-  //         (route) => false);
-  //   } else {
-  //     Navigator.pushAndRemoveUntil(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => CustomerDashBoard()),
-  //         (route) => false);
-  //   }
-  // }
-
-  // void _tryToAuthenticate() async {
-  //   String token = await storage.read(key: 'token');
-  //   Provider.of<Auth>(context, listen: false).attempt(token: token);
-  // }
+  String _validateInput(String value) {
+    if (value.trim().isEmpty) {
+      return 'Field is required!';
+    }
+    return null;
+  }
 
   @override
   void initState() {
-    // checkExistingLogin();
-
     super.initState();
   }
 
@@ -85,407 +57,425 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+// Alert dialog
+  showAlertDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Color(0xff102733),
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: SimpleDialog(
+          elevation: 0,
+          backgroundColor: Color(0xff102733),
+          children: [
+            Center(
+              child: Text(
+                'Authenticating user...',
+                style: TextStyle(fontSize: 12, color: Colors.amber),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   bool isLoading = false;
+  showInfo() {
+    return CupertinoActionSheet(
+      title: Center(
+        child: Row(
+          children: <Widget>[
+            Text(
+              "To",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800),
+            ),
+            Text(
+              "ks",
+              style: TextStyle(
+                  color: Color(0xffFCCD00),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800),
+            )
+          ],
+        ),
+      ),
+      message: Text("Network Error!", style: TextStyle(fontSize: 15)),
+      actions: [
+        CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Check your network connection",
+              style: TextStyle(fontSize: 13)),
+          isDestructiveAction: true,
+        ),
+      ],
+      cancelButton: CupertinoActionSheetAction(
+        child: Text("Cancel"),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
 
   Widget _loginButton() {
     return Row(
       children: [
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-            child: ElevatedButton(
-                onPressed: () async {
-                  if (!formKey.currentState.validate()) {
-                    return;
-                  }
-                  formKey.currentState.validate();
-                  formKey.currentState.save();
-                  setState(() {
-                    isLoading = true;
-                  });
-
-                  submitLogin();
-                },
-                child: Text(
-                  'Login',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.green,
-                  onPrimary: Colors.white,
-                  // padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                )),
-          ),
+          child: ElevatedButton(
+              onPressed: () async {
+                submitLogin();
+              },
+              child: Text(
+                'Login',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                primary: Colors.amber,
+                onPrimary: Colors.white,
+                elevation: 5,
+                // padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+              )),
         ),
       ],
     );
   }
 
   submitLogin() async {
-    SharedPreferences _prefs = await SharedPreferences.getInstance();
-    progressDialog.show();
+    if (!formKey.currentState.validate()) {
+      return;
+    }
+    formKey.currentState.validate();
+    formKey.currentState.save();
+    if (await ConnectivityWrapper.instance.isConnected) {
+      showAlertDialog();
+      SharedPreferences _prefs = await SharedPreferences.getInstance();
 
-    var listener =
-        DataConnectionChecker().onStatusChange.listen((status) async {
-      switch (status) {
-        case DataConnectionStatus.connected:
-          print('Data connection is available.');
+      print('Data connection is available.');
+      _prefs.setString("password", emailCtrl.text);
+      Map<String, String> data = {
+        "emailAddress": emailCtrl.text,
+        "password": passwordCtrl.text,
+      };
 
-          Map<String, String> data = {
-            "emailAddress": emailCtrl.text,
-            "password": passwordCtrl.text,
-          };
-          var response = await networkHandler
-              .post("/api/user/login", data)
-              .timeout(Duration(seconds: 360), onTimeout: () {
-            show(
-                context,
-                "Poor network connection",
-                'The connection has timed out, please try again!',
-                Icon(Icons.restore));
-            progressDialog.dismiss();
-            Navigator.pop(context);
+      var response = await networkHandler
+          .post("/api/user/login", data)
+          .timeout(Duration(seconds: 360), onTimeout: () {
+        _showSnackBar(
+            "Network timed out!", Colors.red[900], Icons.network_check);
+        Navigator.pop(context);
 
-            throw TimeoutException(
-                'The connection has timed out, please try again');
-          });
+        throw TimeoutException(
+            'The connection has timed out, please try again');
+      });
 
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            Map<String, dynamic> output = json.decode(response.body);
-            print(output["token"]);
-            await storage.write(key: "token", value: output["token"]);
-            var userResponse = await networkHandler
-                .getUserDetails("/api/user/get-current-user-details")
-                .timeout(Duration(seconds: 120), onTimeout: () {
-              progressDialog.dismiss();
-              Navigator.pop(context);
-              show(context, "Poor network connection",
-                  "The connection timed out, retry", Icon(Icons.restore));
-              throw TimeoutException(
-                  "The connection timed out, couldn't get user");
-            });
-            var data = jsonDecode(userResponse.body);
-            print(data);
-            var responseData = data["responseData"];
-            print(responseData);
-            var role = responseData["role"];
-            print(role);
-            name = role["name"];
-            print(name);
-            _prefs.setString("name", name);
-            var firstName = responseData["firstName"];
-            print(firstName);
-            String initials = firstName.substring(0, 1).toUpperCase();
-            _prefs.setString("initials", initials);
-            _prefs.setString("fname", firstName);
-            var lastName = responseData["lastName"];
-            print(lastName);
-            _prefs.setString("lname", lastName);
-            var emailAddress = responseData["emailAddress"];
-            print(emailAddress);
-            _prefs.setString("email", emailAddress);
-            var profilePhotoUrl = responseData["profilePhotoUrl"];
-            //decoding the byte string to image, gives error
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Map<String, dynamic> output = json.decode(response.body);
+        var content = output["token"];
+        print(output["token"]);
+        print(content);
+        _prefs.setString("storage", content);
 
-            // prefs.setInt('userIdKey', user['user_id'] ?? 0);
+        var userResponse = await networkHandler
+            .get("/api/user/get-current-user-details")
+            .timeout(Duration(seconds: 240), onTimeout: () {
+          Navigator.pop(context);
+          _showSnackBar("The connection timed out!", Colors.red[900],
+              Icons.network_check);
+          throw TimeoutException("The connection timed out, couldn't get user");
+        });
+        var data = json.decode(userResponse.body);
+        print(data);
+        final responseData = data['responseData'];
 
-            _prefs.setString("decodedPic", (profilePhotoUrl) ?? '');
+        //return User.fromJson(jsonResponse['responseData']);
 
-            //converting asset image to string
+        var role = responseData["role"];
+        var name = role['name'];
+        print(name);
 
-            print(initials + "from initials");
-            if (name == "CUSTOMER") {
-              print("the user  is " + name);
+        _prefs.setString("name", name);
+        print("logging in");
 
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => CustomerDashBoard()),
-                  (route) => false);
-            } else {
-              print("the user  is not " + name);
+        if (name == "CUSTOMER") {
+          print("the user  is " + name);
+          Navigator.pop(context);
+          Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerHome()),
+              (route) => false);
+        } else if (name == "ADMIN") {
+          print("the user  is  " + name);
+          Navigator.pop(context);
+          Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => AdminDashBoard()),
+              (route) => false);
+        } else {
+          print('Error! User not defined');
+        }
 
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => AdminDashBoard()),
-                  (route) => false);
-            }
-
-            setState(() {
-              isLoading = false;
-              progressDialog.dismiss();
-            });
-          } else {
-            setState(() {
-              validate = false;
-              isLoading = false;
-              progressDialog.dismiss();
-              Navigator.pop(context);
-              show(context, "Failed", "Failed to login", Icon(Icons.error));
-            });
-          }
-          break;
-        case DataConnectionStatus.disconnected:
-          setState(() {
-            isLoading = false;
-            progressDialog.dismiss();
-            Navigator.pop(context);
-            show(context, "Error!", "Check your network connection.",
-                Icon(Icons.error));
-            print('Check your network connection.');
-          });
-          break;
+        setState(() {
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          validate = false;
+          isLoading = false;
+          _showSnackBar("Login failed!", Colors.red[900], Icons.error);
+          Navigator.pop(context);
+        });
       }
-    });
-    await Future.delayed(Duration(seconds: 30));
-    await listener.cancel();
+    } else {
+      print("No internet connection");
+      //showInfo();
+      _showSnackBar(
+          "No network connection", Colors.red[900], Icons.network_check);
+    }
   }
 
-  ArsProgressDialog progressDialog;
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    progressDialog = ArsProgressDialog(context,
-        blur: 2,
-        backgroundColor: Colors.blue[900],
-        dismissable: false,
-        loadingWidget: Container(
-          decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(10)),
-          width: 220,
-          height: 60,
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Center(
-                child: Row(
-              children: [
-                CupertinoActivityIndicator(
-                  radius: 20,
-                ),
-                SizedBox(width: 10),
-                Text('Please wait...',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
-            )),
-          ),
-        ));
     return WillPopScope(
       child: Scaffold(
-        key: _scaffoldKey,
-        body: SafeArea(
-          child: Container(
-            height: size.height,
-            child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Expanded(
-                      // flex: 1,
-                      child: Container(
-                        // alignment: Alignment(0.0, 1.0),
-                        height: 270,
-                        width: size.width,
-                        decoration: BoxDecoration(
-                          //borderRadius: BorderRadius.only(
-                          // topLeft: Radius.circular(15),
-                          // topRight: Radius.circular(15)),
-                          image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: AssetImage("asset/tokspic.jpg")),
+        body: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(color: Color(0xff102733)),
+              //child: Image.asset("asset/background.png"),
+            ),
+            Center(
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            FittedBox(
+                              child: Text(
+                                "To",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            FittedBox(
+                              child: Text(
+                                "ks",
+                                style: TextStyle(
+                                    color: Color(0xffFFA700),
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            )
+                          ],
                         ),
-                        child: Center(
-                          // alignment: Alignment.center,
+                        SizedBox(height: 30),
+                        FittedBox(
                           child: Text(
-                            'Toks',
-                            style: GoogleFonts.lato(
-                              fontSize: 50,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
+                            "Welcome!",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                                fontSize: 26,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        FittedBox(
+                          child: Text(
+                            "Our mission is to provide you advanced xxx xxxxxxx services!",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Container(
+                          alignment: Alignment(1.0, 0.0),
+                          child: GestureDetector(
+                            onTap: () async {
+                              if (await ConnectivityWrapper
+                                  .instance.isConnected) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => SignUpPage()));
+                              } else {
+                                _showSnackBar("No network connection!",
+                                    Colors.red[900], Icons.network_check);
+                              }
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                FittedBox(
+                                  child: Text(
+                                    "Get Started now!",
+                                    style: TextStyle(
+                                        color: Colors.amber, fontSize: 17),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.amber,
+                                )
+                              ],
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      // flex: 1,
-                      child: Container(
-                        color: Colors.black,
-                        alignment: Alignment.bottomCenter,
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(15),
-                                bottomRight: Radius.circular(15)),
-                          ),
-                          child: ListView(
-                            children: [
-                              SizedBox(height: 5),
-                              Padding(
-                                padding: const EdgeInsets.all(5),
-                                child: TextFormField(
-                                  // style: TextStyle(color: Colors.grey),
-                                  decoration: InputDecoration(
-                                      suffixIcon: Icon(Icons.mail),
-                                      alignLabelWithHint: true,
-                                      hintText: 'you@example.com',
-                                      labelText: 'Email',
-                                      enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[700],
-                                              width: 1.0)),
-                                      focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.blue[700],
-                                              width: 1.0))),
-                                  textInputAction: TextInputAction.next,
-                                  validator: (value) =>
-                                      EmailValidator.validate(value)
-                                          ? null
-                                          : "Invalid Email Address",
-                                  // onSaved: (value) {
-                                  //   _userEmail = value;
-                                  // },
-                                  keyboardType: TextInputType.emailAddress,
-                                  controller: emailCtrl,
-                                ),
-                              ),
 
-                              //SizedBox(height: 10),
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: TextFormField(
-                                  //style: TextStyle(color: Colors.grey),
-                               //   maxLength: 35,
-                                  textInputAction: TextInputAction.next,
-                                  
-                                  keyboardType: TextInputType.visiblePassword,
-                                  controller: passwordCtrl,
-                                  decoration: InputDecoration(
-                                      // prefixIcon:Icon(Icons.lock),
-                                      alignLabelWithHint: true,
-                                      hintText: 'password',
-                                      labelText: 'Password',
-                                      suffixIcon: IconButton(
-                                        icon: Icon(
-                                          _isObscure
-                                              ? Icons.visibility
-                                              : Icons.visibility_off,
-                                          color: Colors.grey,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _isObscure = !_isObscure;
-                                          });
-                                        },
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey[700],
-                                              width: 1.0)),
-                                      focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.blue, width: 1.0))),
-                                  obscureText: _isObscure,
-                                  validator: (value) {
-                                    if (value.isEmpty) {
-                                      return 'Password is required!';
-                                    }
-                                    return null;
-                                  },
-                                  // onSaved: (value) {
-                                  //   _userPassword = value;
-                                  // },
-                                ),
+                        SizedBox(height: 20),
+                        //email field
+                        TextFormField(
+                          focusNode: myFocusNode,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.mail, color: Colors.black),
+                            labelText: 'Email',
+                            labelStyle: TextStyle(
+                                color: myFocusNode.hasFocus
+                                    ? Colors.black
+                                    : Colors.grey[700]),
+                            fillColor: Colors.white70,
+                            filled: true,
+                            focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.amber, width: 1.0)),
+                            enabledBorder: UnderlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide(color: Colors.black)),
+                          ),
+                          textInputAction: TextInputAction.next,
+                          validator: _validateInput,
+                          onFieldSubmitted: (String value) {
+                            _nextFocus(myFocusNode2);
+                          },
+                          keyboardType: TextInputType.emailAddress,
+                          controller: emailCtrl,
+                        ),
+                        SizedBox(height: 10),
+
+                        // password field
+                        TextFormField(
+                          focusNode: myFocusNode2,
+                          onFieldSubmitted: (String value) {
+                            submitLogin();
+                          },
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.visiblePassword,
+                          controller: passwordCtrl,
+                          decoration: InputDecoration(
+                            labelStyle: TextStyle(
+                                color: myFocusNode2.hasFocus
+                                    ? Colors.black
+                                    : Colors.grey[700]),
+                            fillColor: Colors.white70,
+                            filled: true,
+                            prefixIcon: Icon(Icons.lock, color: Colors.black),
+                            labelText: 'Password',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isObscure
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.black,
                               ),
-                              SizedBox(height: 3.0),
-                              Container(
-                                alignment: Alignment(1.0, 0.0),
-                                padding: EdgeInsets.only(right: 8.0),
-                                child: InkWell(
-                                  onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => PasswordRecovery())),
-                                  child: Text(
-                                    'Forgot Password',
-                                    style: TextStyle(
-                                        fontSize: 14.0,
-                                        color: Colors.blue[700],
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 7),
-                              _loginButton(),
-                              SizedBox(height: 5),
-                              Center(
-                                child: Text(
-                                  'Don\'t have an account?',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                              //SizedBox(height: 5),
-                              Center(
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                SignUpPage()));
-                                  },
-                                  child: Text(
-                                    'Create account',
-                                    style: TextStyle(
-                                      decoration: TextDecoration.underline,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.0,
-                                      color: Colors.blue[700],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 7),
-                            ],
+                              onPressed: () {
+                                setState(() {
+                                  _isObscure = !_isObscure;
+                                });
+                              },
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.amber, width: 1.0)),
+                            enabledBorder: UnderlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                                borderSide: BorderSide(color: Colors.black)),
+                          ),
+                          obscureText: _isObscure,
+                          validator: (value) {
+                            if (value.isEmpty) {
+                              return 'Password is required!';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 15),
+                        Container(
+                          alignment: Alignment(1.0, 0.0),
+                          child: GestureDetector(
+                            onTap: () async {
+                              if (await ConnectivityWrapper
+                                  .instance.isConnected) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            PasswordRecovery()));
+                              } else {
+                                _showSnackBar("No network connection",
+                                    Colors.red[900], Icons.error);
+                              }
+                            },
+                            child: Text(
+                              "Recover password",
+                              style:
+                                  TextStyle(color: Colors.amber, fontSize: 13),
+                            ),
                           ),
                         ),
-                      ),
+                        SizedBox(height: 15),
+                        _loginButton(),
+                      ],
                     ),
-                  ],
-                )),
-          ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       onWillPop: _onBackButton,
     );
   }
 
+  // Multipurpose snackBar
+  void _showSnackBar(String message, Color color, IconData icon) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: color,
+      content: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+        Icon(icon, color: Colors.white, size: 14),
+        SizedBox(width: 15),
+        Expanded(
+          child: Text(message,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400)),
+        ),
+      ]),
+      duration: const Duration(seconds: 3),
+    ));
+  }
+
   Future<bool> _onBackButton() {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => LoginPage()));
     return Future.value(false);
-  }
-
-  void show(BuildContext context, String title, String text, Icon icon) {
-    AchievementView(
-      context,
-      title: title,
-      subTitle: text,
-      // onTab: _onTabAchievement,
-      icon: icon,
-      typeAnimationContent: AnimationTypeAchievement.fadeSlideToUp,
-      borderRadius: 5.0,
-      color: Colors.red[900],
-      textStyleTitle: TextStyle(color: Colors.white24),
-      textStyleSubTitle: TextStyle(color: Colors.white),
-      alignment: Alignment.topCenter,
-      duration: Duration(seconds: 5),
-      isCircle: false,
-    )..show();
   }
 }

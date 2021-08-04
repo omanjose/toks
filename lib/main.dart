@@ -1,43 +1,31 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:project2/api_controller/networkHandler.dart';
 import 'package:project2/dashboard/admin_dashboard.dart';
-import 'package:project2/dashboard/customer_dashboard.dart';
+import 'package:project2/dashboard/customer_home.dart';
 import 'package:project2/login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    MyApp(),
+  );
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Future.delayed(Duration(seconds: 1)),
-      builder: (context, AsyncSnapshot snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return MaterialApp(
-            home: LandingPage(),
-            debugShowCheckedModeBanner: false,
-            routes: <String, WidgetBuilder>{
-              '/admin_dashboard': (BuildContext context) =>
-                  new AdminDashBoard(),
-              '/customer_dashboard': (BuildContext context) =>
-                  new CustomerDashBoard(),
-              '/login': (BuildContext context) => new LoginPage(),
-            },
-          );
-        } else {
-          //return LandingPage();
-          // Loading is done, return the app:
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: LandingPage(),
-          );
-        }
+    return MaterialApp(
+      color: Color(0xffFAE072),
+      home: LandingPage(),
+      theme: ThemeData(
+        canvasColor: Colors.transparent,
+      ),
+      debugShowCheckedModeBanner: false,
+      routes: <String, WidgetBuilder>{
+        '/admin_dashboard': (BuildContext context) => new AdminDashBoard(),
+        '/customer_home': (BuildContext context) => new CustomerHome(),
+        '/login': (BuildContext context) => new LoginPage(),
       },
     );
   }
@@ -49,13 +37,8 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  final storage = FlutterSecureStorage();
+ // final storage = FlutterSecureStorage();
   NetworkHandler networkHandler = NetworkHandler();
-
-  // void _tryToAuthenticate() async {
-  //   String token = await storage.read(key: 'token');
-  //   Provider.of<Auth>(context, listen: false).attempt(token: token);
-  // }
 
   @override
   void initState() {
@@ -67,59 +50,63 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-          child: Container(
+      body: Container(
+        decoration: BoxDecoration(color: Color(0xff102733)),
         child: Stack(
           children: [
             Center(
-              child: Text(
-                'toks',
-                style: TextStyle(
-                    fontSize: 45,
-                    letterSpacing: 8,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[900]),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'To',
+                    style: TextStyle(
+                        fontSize: 45,
+                        letterSpacing: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                  Text(
+                    'ks',
+                    style: TextStyle(
+                        fontSize: 45,
+                        letterSpacing: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xffFCCD00)),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-      )),
+      ),
     );
   }
 
-  startApp() {
-    Timer(Duration(seconds: 2), () {
-      checkToken();
+  startApp() async {
+    Timer(Duration(seconds: 1), () {
+      checkUser();
     });
   }
 
-  checkToken() async {
-    String token = await storage.read(key: "token");
-    if (token!= null) {
-      checkUserType();
-    } else {
-      await Future.delayed(Duration(seconds: 3));
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-          (Route<dynamic> route) => false);
-    }
-  }
-
-  void checkUserType() async {
-    String userType = await storage.read(key: "name");
-
-    if (userType != "ADMIN") {
-     
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => CustomerDashBoard()),
-          (Route<dynamic> route) => false);
-    } else {
-     
+  checkUser() async {
+    // String token = await storage.read(key: "token");
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    var authToken = _prefs.getString("name");
+    if (authToken == "ADMIN") {
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => AdminDashBoard()),
+          (Route<dynamic> route) => false);
+    } else if (authToken == "CUSTOMER") {
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => CustomerHome()),
+          (Route<dynamic> route) => false);
+    } else {
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
           (Route<dynamic> route) => false);
     }
   }

@@ -21,9 +21,12 @@ class ShimmerList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Container(
-                        width: 25.0,
-                        height: 25.0,
-                        color: Colors.white,
+                        width: 30.0,
+                        height: 30.0,
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(360),
+                        ),
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -35,7 +38,7 @@ class ShimmerList extends StatelessWidget {
                             Container(
                               width: double.infinity,
                               height: 15.0,
-                              color: Colors.white,
+                              color: Colors.black54,
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 2.0),
@@ -43,7 +46,7 @@ class ShimmerList extends StatelessWidget {
                             Container(
                               width: double.infinity,
                               height: 15.0,
-                              color: Colors.white,
+                              color: Colors.black54,
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 2.0),
@@ -51,7 +54,7 @@ class ShimmerList extends StatelessWidget {
                             Container(
                               width: 100.0,
                               height: 15.0,
-                              color: Colors.white,
+                              color: Colors.black54,
                             ),
                           ],
                         ),
@@ -59,7 +62,7 @@ class ShimmerList extends StatelessWidget {
                     ],
                   ),
                 ),
-                itemCount: 25,
+                itemCount: 20,
               ),
             ),
           ),

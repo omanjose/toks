@@ -1,19 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:achievement_view/achievement_widget.dart';
-import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:connectivity_wrapper/connectivity_wrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:email_validator/email_validator.dart';
 import 'package:project2/api_controller/networkHandler.dart';
 import 'package:project2/login.dart';
-import 'package:achievement_view/achievement_view.dart';
-import 'package:ars_progress_dialog/ars_progress_dialog.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -23,48 +17,56 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   NetworkHandler networkHandler = NetworkHandler();
   bool validate = true;
-  final storage = new FlutterSecureStorage();
   File _imageFile;
   final picker = ImagePicker();
   bool _isObscure = true;
   final _formKey = GlobalKey<FormState>();
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-
+  FocusNode myFocusNode1 = new FocusNode();
+  FocusNode myFocusNode2 = new FocusNode();
+  FocusNode myFocusNode3 = new FocusNode();
+  FocusNode myFocusNode4 = new FocusNode();
+  FocusNode myFocusNode5 = new FocusNode();
+  FocusNode myFocusNode6 = new FocusNode();
   bool circular = false;
+
+  // Multipurpose snackBar
+  void _showSnackBar(String message, Color color, IconData icon) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: color,
+      content: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+        Icon(icon, color: Colors.white, size: 14),
+        SizedBox(width: 15),
+        Expanded(
+          child: Text(message,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400)),
+        ),
+      ]),
+      duration: const Duration(seconds: 3),
+    ));
+  }
 
   //pick image from gallery or camera
   Future<void> pickImage(ImageSource source) async {
-    final pickedFile = await picker.getImage(source: source);
+    final pickedFile = await picker.pickImage(source: source);
     setState(() {
       if (pickedFile != null) {
         _imageFile = File(pickedFile.path);
       } else {
         print('No image selected.');
-        show(context, "Photo upload", "No image was selected",
-            Icon(Icons.info_outline_sharp));
+        _showSnackBar(
+            "No image is been selected", Colors.red[900], Icons.camera);
       }
     });
   }
 
-  //crop image
-  Future<void> cropImage() async {
-    File cropped = await ImageCropper.cropImage(
-        sourcePath: _imageFile.path,
-        androidUiSettings: AndroidUiSettings(
-            toolbarColor: Colors.blueGrey,
-            toolbarWidgetColor: Colors.white,
-            toolbarTitle: 'Crop',
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false),
-        iosUiSettings: IOSUiSettings(
-          minimumAspectRatio: 1.0,
-          title: 'Crop',
-          hidesNavigationBar: false,
-        ));
-    setState(() {
-      _imageFile = cropped ?? _imageFile;
-    });
+  _nextFocus(FocusNode focusNode) {
+    FocusScope.of(context).requestFocus(focusNode);
   }
 
   bool isLoading = false;
@@ -79,39 +81,10 @@ class _SignUpPageState extends State<SignUpPage> {
     _phoneController.dispose();
   }
 
-  ArsProgressDialog progressDialog;
   @override
   Widget build(BuildContext context) {
-    progressDialog = ArsProgressDialog(context,
-        blur: 2,
-        backgroundColor: Colors.black.withOpacity(0.5),
-        //backgroundColor: Colors.blue[900],
-        dismissable: false,
-        loadingWidget: Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10), color: Colors.white),
-          width: 220,
-          height: 60,
-          child: Center(
-              child: Padding(
-            padding: const EdgeInsets.only(left: 15),
-            child: Row(
-              children: [
-                CupertinoActivityIndicator(
-                  radius: 20,
-                ),
-                SizedBox(width: 10),
-                Text('Registering...',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          )),
-        ));
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text('Register'),
-      // ),
+      backgroundColor: Color(0xff102733),
       key: _scaffoldKey,
       body: Form(
         key: _formKey,
@@ -119,7 +92,6 @@ class _SignUpPageState extends State<SignUpPage> {
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
             child: Column(
-              //mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
@@ -129,17 +101,19 @@ class _SignUpPageState extends State<SignUpPage> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                            // color: Colors.grey[200],
-                            border: Border.all(),
-                            borderRadius: BorderRadius.circular(50)),
-                        width: 20,
-                        height: 20,
+                          //color: Colors.white,
+                          border: Border.all(color: Colors.white),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        width: 25,
+                        height: 25,
                         child: InkWell(
                           child: Center(
                             child: Text(
                               'X',
                               style: TextStyle(
-                                  color: Colors.black,
+                                  fontSize: 18,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -149,68 +123,67 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
                       SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.18,
+                        width: MediaQuery.of(context).size.width * 0.15,
                       ),
-                      Container(
-                        child: Text(
-                          'Create Account',
-                          style: TextStyle(
-                              letterSpacing: 3,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: Colors.blue[900]),
-                        ),
+                      Column(
+                        children: [
+                          Container(
+                            child: Text(
+                              'Create Account',
+                              style: TextStyle(
+                                  //letterSpacing: 3,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 25,
+                                  color: Colors.white),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Text(
+                              'Complete all fields *',
+                              style: TextStyle(
+                                  color: Colors.red.shade900,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                Card(
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15)),
-                  ),
-                  child: Center(
-                      child: InkWell(
+                Center(
+                  child: InkWell(
                     child: CircleAvatar(
-                      radius: 55,
+                      radius: 45,
                       backgroundImage: _imageFile == null
                           ? AssetImage("asset/imageicon.png")
                           : FileImage(File(_imageFile.path)),
                     ),
                     onTap: () => takeShot(context),
-                  )),
-                ),
-                Card(
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                      //borderRadius: BorderRadius.only(
-                      //topLeft: Radius.circular(15),
-                      // bottomLeft: Radius.circular(15),
-                      // bottomRight: Radius.circular(15)),
-                      ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(5.0),
-                    child: Column(children: [
-                      SizedBox(height: 3),
-                      _firstName(),
-                      SizedBox(height: 3),
-                      _lastName(),
-                      SizedBox(height: 3),
-                      _phoneNum(),
-                      SizedBox(height: 3),
-                      _buildUserEmail(),
-                      SizedBox(height: 3),
-                      _buildPassword(),
-                      SizedBox(height: 3),
-                      _buildConfirmPassword(),
-                    ]),
                   ),
                 ),
-                SizedBox(height: 10),
-                _registerButton(),
-                SizedBox(height: 10),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  child: Column(children: [
+                    SizedBox(height: 8),
+                    _firstName(),
+                    SizedBox(height: 8),
+                    _lastName(),
+                    SizedBox(height: 8),
+                    _phoneNum(),
+                    SizedBox(height: 8),
+                    _buildUserEmail(),
+                    SizedBox(height: 8),
+                    _buildPassword(),
+                    SizedBox(height: 8),
+                    _buildConfirmPassword(),
+                    SizedBox(height: 10),
+                    _registerButton(),
+                  ]),
+                ),
+                SizedBox(height: 15),
                 Center(
                   child: InkWell(
                     onTap: () {
@@ -222,7 +195,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         decoration: TextDecoration.underline,
                         fontWeight: FontWeight.bold,
                         fontSize: 14.0,
-                        color: Colors.blue[900],
+                        color: Colors.amber,
                       ),
                     ),
                   ),
@@ -233,33 +206,6 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
       ),
-    );
-  }
-
-// Another loader
-  void dialogLoader(BuildContext context) {
-    showDialog(
-      barrierLabel: 'Toks',
-      barrierDismissible: false,
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Container(
-            height: 50,
-            width: 220,
-            child: Center(
-              child: Row(
-                children: [
-                  CupertinoActivityIndicator(),
-                  SizedBox(width: 5),
-                  Text('Please wait...'),
-                ],
-              ),
-            ),
-          ),
-          elevation: 10,
-        );
-      },
     );
   }
 
@@ -288,16 +234,49 @@ class _SignUpPageState extends State<SignUpPage> {
               },
               child: Text(
                 'Register',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                primary: Colors.green,
+                primary: Colors.amber,
                 onPrimary: Colors.white,
                 elevation: 5,
                 // padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
               )),
         ),
       ],
+    );
+  }
+
+  // Alert dialog
+  showAlertDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      backgroundColor: Color(0xff102733),
+      content: Container(
+        decoration: BoxDecoration(color: Color(0xff102733)),
+        child: new Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              backgroundColor: Colors.amber,
+            ),
+            SizedBox(height: 10),
+            Container(
+              // margin: EdgeInsets.only(left: 5),
+              child:
+                  Text("Please wait...", style: TextStyle(color: Colors.amber)),
+            ),
+          ],
+        ),
+      ),
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return alert;
+      },
     );
   }
 
@@ -321,17 +300,33 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "TOKS",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.blue[900],
+                    Center(
+                      child: Row(
+                        children: <Widget>[
+                          Text(
+                            "To",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800),
+                          ),
+                          Text(
+                            "ks",
+                            style: TextStyle(
+                                color: Color(0xffFCCD00),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800),
+                          )
+                        ],
                       ),
                     ),
                     SizedBox(height: 12),
                     Text(
-                      "You need to Accept terms and conditions",
-                      style: TextStyle(fontSize: 10, color: Colors.blue[900]),
+                      "I Accept Toks terms and conditions",
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[900]),
                     ),
                     SizedBox(height: 8),
                     Row(
@@ -344,7 +339,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             //registering();
                           },
                           child: Text(
-                            "Accept",
+                            "Yes ",
                           ),
                           style: ElevatedButton.styleFrom(
                             primary: Colors.green[700],
@@ -370,7 +365,7 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             margin: EdgeInsets.only(bottom: 50, left: 12, right: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Color(0xff102733),
               borderRadius: BorderRadius.circular(40),
             ),
           ),
@@ -397,22 +392,25 @@ class _SignUpPageState extends State<SignUpPage> {
 
   _firstName() {
     return TextFormField(
-      // style: TextStyle(color: Colors.grey),
-
+      onFieldSubmitted: (String value) {
+        _nextFocus(myFocusNode2);
+      },
+      focusNode: myFocusNode1,
       decoration: InputDecoration(
-          prefixIcon: Icon(Icons.person),
-          alignLabelWithHint: true,
-          hintText: 'First name',
-          labelText: 'First name',
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue[700]))),
+        prefixIcon: Icon(Icons.person, color: Colors.black),
+        fillColor: Colors.white70,
+        filled: true,
+        labelText: 'First name',
+        labelStyle: TextStyle(
+            color: myFocusNode1.hasFocus ? Colors.black : Colors.grey[700]),
+        focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber, width: 1.0)),
+        enabledBorder: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Colors.black)),
+      ),
       textInputAction: TextInputAction.next,
       validator: (value) => value.isEmpty ? 'First name is required' : null,
-      // onSaved: (value) {
-      //   _userEmail = value;
-      // },
       keyboardType: TextInputType.text,
       controller: _firstameController,
     );
@@ -420,21 +418,25 @@ class _SignUpPageState extends State<SignUpPage> {
 
   _lastName() {
     return TextFormField(
-      // style: TextStyle(color: Colors.grey),
+      onFieldSubmitted: (String value) {
+        _nextFocus(myFocusNode3);
+      },
+      focusNode: myFocusNode2,
       decoration: InputDecoration(
-          prefixIcon: Icon(Icons.person),
-          alignLabelWithHint: true,
-          hintText: 'Last name',
-          labelText: 'Last name',
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue[700]))),
+        prefixIcon: Icon(Icons.person, color: Colors.black),
+        fillColor: Colors.white70,
+        filled: true,
+        labelText: 'Last name',
+        labelStyle: TextStyle(
+            color: myFocusNode2.hasFocus ? Colors.black : Colors.grey[700]),
+        focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber, width: 1.0)),
+        enabledBorder: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Colors.black)),
+      ),
       textInputAction: TextInputAction.next,
-      validator: (value) => value.isEmpty ? 'Last is required' : null,
-      // onSaved: (value) {
-      //   _userEmail = value;
-      // },
+      validator: (value) => value.isEmpty ? 'Field is required' : null,
       keyboardType: TextInputType.text,
       controller: _lastameController,
     );
@@ -442,19 +444,25 @@ class _SignUpPageState extends State<SignUpPage> {
 
   _phoneNum() {
     return TextFormField(
-      // style: TextStyle(color: Colors.grey),
+      onFieldSubmitted: (String value) {
+        _nextFocus(myFocusNode4);
+      },
+      focusNode: myFocusNode3,
       decoration: InputDecoration(
-          prefixIcon: Icon(Icons.phone),
-          alignLabelWithHint: true,
-          hintText: 'Phone number',
-          labelText: 'Phone number',
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue[700]))),
+        fillColor: Colors.white70,
+        filled: true,
+        prefixIcon: Icon(Icons.phone, color: Colors.black),
+        labelText: 'Phone number',
+        labelStyle: TextStyle(
+            color: myFocusNode3.hasFocus ? Colors.black : Colors.grey[700]),
+        focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber, width: 1.0)),
+        enabledBorder: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Colors.black)),
+      ),
       textInputAction: TextInputAction.next,
       validator: (value) => value.isEmpty ? 'Phone number is required' : null,
-
       keyboardType: TextInputType.phone,
       controller: _phoneController,
     );
@@ -462,20 +470,26 @@ class _SignUpPageState extends State<SignUpPage> {
 
   _buildUserEmail() {
     return TextFormField(
-      // style: TextStyle(color: Colors.grey),
+      onFieldSubmitted: (String value) {
+        _nextFocus(myFocusNode5);
+      },
+      focusNode: myFocusNode4,
       decoration: InputDecoration(
-          prefixIcon: Icon(Icons.mail),
-          alignLabelWithHint: true,
-          hintText: 'you@example.com',
-          labelText: 'Email',
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue[700]))),
+        fillColor: Colors.white70,
+        filled: true,
+        prefixIcon: Icon(Icons.mail, color: Colors.black),
+        labelText: 'Email',
+        labelStyle: TextStyle(
+            color: myFocusNode4.hasFocus ? Colors.black : Colors.grey[700]),
+        focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber, width: 1.0)),
+        enabledBorder: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Colors.black)),
+      ),
       textInputAction: TextInputAction.next,
       validator: (value) =>
           EmailValidator.validate(value) ? null : "Invalid Email Address",
-
       keyboardType: TextInputType.emailAddress,
       controller: _emailController,
     );
@@ -483,31 +497,38 @@ class _SignUpPageState extends State<SignUpPage> {
 
   _buildPassword() {
     return TextFormField(
-      //style: TextStyle(color: Colors.grey),
-      maxLength: 35,
+      focusNode: myFocusNode5,
+      onFieldSubmitted: (String value) {
+        _nextFocus(myFocusNode6);
+      },
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.visiblePassword,
       controller: _passwordController,
       decoration: InputDecoration(
-          prefixIcon: Icon(Icons.lock),
-          alignLabelWithHint: true,
-          hintText: 'password',
-          labelText: 'Password',
-          suffixIcon: IconButton(
-            icon: Icon(
-              _isObscure ? Icons.visibility : Icons.visibility_off,
-              color: Colors.grey,
-            ),
-            onPressed: () {
-              setState(() {
-                _isObscure = !_isObscure;
-              });
-            },
+        fillColor: Colors.white70,
+        filled: true,
+        prefixIcon: Icon(Icons.lock, color: Colors.black),
+        alignLabelWithHint: true,
+        labelText: 'Password',
+        labelStyle: TextStyle(
+            color: myFocusNode5.hasFocus ? Colors.black : Colors.grey[700]),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isObscure ? Icons.visibility : Icons.visibility_off,
+            color: Colors.black,
           ),
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.blue))),
+          onPressed: () {
+            setState(() {
+              _isObscure = !_isObscure;
+            });
+          },
+        ),
+        focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber, width: 1.0)),
+        enabledBorder: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Colors.black)),
+      ),
       obscureText: _isObscure,
       validator: (value) {
         if (value.trim().isEmpty) {
@@ -522,39 +543,45 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  bool _isObscure2 = true;
   _buildConfirmPassword() {
     return TextFormField(
-      //style: TextStyle(color: Colors.grey),
-      maxLength: 30,
+      onFieldSubmitted: (String value) {
+        _registerButton();
+      },
+      focusNode: myFocusNode6,
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.visiblePassword,
       controller: _confirmPasswordController,
       decoration: InputDecoration(
-          prefixIcon: Icon(Icons.lock),
-          alignLabelWithHint: true,
-          hintText: 'password',
-          labelText: 'Password',
-          // suffixIcon: IconButton(
-          //   icon: Icon(
-          //     _isObscure ? Icons.visibility : Icons.visibility_off,
-          //     color: Colors.grey,
-          //   ),
-          //   onPressed: () {
-          //     setState(() {
-          //       _isObscure = !_isObscure;
-          //     });
-          //   },
-          // ),
-          enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[700])),
-          focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-            color: Colors.blue,
-          ))),
-      obscureText: true,
+        fillColor: Colors.white70,
+        filled: true,
+        prefixIcon: Icon(Icons.lock, color: Colors.black),
+        alignLabelWithHint: true,
+        labelText: 'Confirm password',
+        labelStyle: TextStyle(
+            color: myFocusNode6.hasFocus ? Colors.black : Colors.grey[700]),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isObscure2 ? Icons.visibility : Icons.visibility_off,
+            color: Colors.black,
+          ),
+          onPressed: () {
+            setState(() {
+              _isObscure2 = !_isObscure2;
+            });
+          },
+        ),
+        focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber, width: 1.0)),
+        enabledBorder: UnderlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide(color: Colors.black)),
+      ),
+      obscureText: _isObscure2,
       validator: (value) {
         if (value.trim().isEmpty) {
-          return 'Password is required';
+          return 'Password confirmation is required';
         }
         if (value.trim().length < 6) {
           return 'Passwords must be at least 6 characters in length';
@@ -571,41 +598,72 @@ class _SignUpPageState extends State<SignUpPage> {
     showModalBottomSheet(
         context: context,
         builder: (BuildContext context) {
-          return Container(
-            height: MediaQuery.of(context).size.height * 30,
-            padding: EdgeInsets.all(8),
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => LoginPage()),
-                            (route) => false);
-                      }),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  "Successful",
-                  style: GoogleFonts.lato(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.blue[900]),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Account successfully created with \n ${_emailController.text}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+          return SizedBox(
+            height: 150,
+            child: Container(
+              decoration: BoxDecoration(
+                  color: Color(0xff102733),
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10))),
+              padding: EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                        icon: Icon(Icons.close, color: Colors.white),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoginPage()),
+                              (route) => false);
+                        }),
                   ),
-                ),
-              ],
+                  SizedBox(height: 10),
+                  Center(
+                    child: Row(
+                      children: <Widget>[
+                        Text(
+                          "To",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          "ks",
+                          style: TextStyle(
+                              color: Color(0xffFCCD00),
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800),
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "Successful",
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.blue[900]),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Account successfully created with \n ${_emailController.text}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         });
@@ -631,11 +689,24 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        "TOKS",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.blue[900],
+                      Center(
+                        child: Row(
+                          children: <Widget>[
+                            Text(
+                              "To",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800),
+                            ),
+                            Text(
+                              "ks",
+                              style: TextStyle(
+                                  color: Color(0xffFCCD00),
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800),
+                            )
+                          ],
                         ),
                       ),
                       SizedBox(height: 12),
@@ -654,7 +725,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             },
                             child: Text(
                               "Capture with camera",
-                              style: TextStyle(fontSize: 11),
+                              style:
+                                  TextStyle(fontSize: 11, color: Colors.amber),
                             ),
                             style: ElevatedButton.styleFrom(
                               primary: Colors.blue[700],
@@ -669,7 +741,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             },
                             child: Text(
                               "Select from gallery",
-                              style: TextStyle(fontSize: 11),
+                              style:
+                                  TextStyle(fontSize: 11, color: Colors.amber),
                             ),
                             style: ElevatedButton.styleFrom(
                               primary: Colors.blue[900],
@@ -685,7 +758,7 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             margin: EdgeInsets.only(bottom: 50, left: 12, right: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Color(0xff102733),
               borderRadius: BorderRadius.circular(40),
             ),
           ),
@@ -700,112 +773,98 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  void show(BuildContext context, String title, String text, Icon icon) {
-    AchievementView(
-      context,
-      title: title,
-      subTitle: text,
-      // onTab: _onTabAchievement,
-      icon: icon,
-      typeAnimationContent: AnimationTypeAchievement.fadeSlideToUp,
-      borderRadius: 5.0,
-
-      color: Colors.red[900],
-      textStyleTitle: TextStyle(color: Colors.white54),
-      textStyleSubTitle: TextStyle(color: Colors.white),
-      alignment: Alignment.topCenter,
-      duration: Duration(seconds: 5),
-      isCircle: false,
-    )..show();
+  showInfo() {
+    return CupertinoActionSheet(
+      title: Center(
+        child: Row(
+          children: <Widget>[
+            Text(
+              "To",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800),
+            ),
+            Text(
+              "ks",
+              style: TextStyle(
+                  color: Color(0xffFCCD00),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800),
+            )
+          ],
+        ),
+      ),
+      message: Text("Network Error!", style: TextStyle(fontSize: 15)),
+      actions: [
+        CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Check your network connection",
+              style: TextStyle(fontSize: 13)),
+          isDestructiveAction: true,
+        ),
+      ],
+      cancelButton: CupertinoActionSheetAction(
+        child: Text("Cancel"),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+    );
   }
 
   submitUser() async {
-    progressDialog.show();
+    
+    if (await ConnectivityWrapper.instance.isConnected) {
+      showAlertDialog(context);
+      final bytes = File(_imageFile.path.toString()).readAsBytesSync();
+      String img64 = base64Encode(bytes);
+      // print("file name " + img64);
+      print("the converted image " + img64);
+      Map<String, String> data = {
+        "confirmPassword": _confirmPasswordController.text,
+        "emailAddress": _emailController.text,
+        "firstName": _firstameController.text,
+        "lastName": _lastameController.text,
+        "password": _passwordController.text,
+        "phoneNumber": _phoneController.text,
+        "profilePhoto": img64,
+      };
 
-    var listener =
-        DataConnectionChecker().onStatusChange.listen((status) async {
-      switch (status) {
-        case DataConnectionStatus.connected:
-          print('Data connection is available.');
-          if (_imageFile == null) return;
-          String base64Image = base64Encode(_imageFile.readAsBytesSync());
-          String fileName = _imageFile.path.split("/").last;
+      var response = await networkHandler
+          .post("/api/user/signup", data)
+          .timeout(Duration(seconds: 360), onTimeout: () {
+        setState(() {
+          _showSnackBar(
+              "Connection timed out", Colors.red[900], Icons.network_check);
+          Navigator.pop(context);
+        });
+        throw TimeoutException('The connection has timed out!');
+      });
 
-          // final bytes = _imageFile.readAsBytesSync();
-          // String _img64 = base64Encode(bytes);
-          print("file name " + fileName);
-          print("the converted image " + base64Image);
-          Map<String, String> data = {
-            "confirmPassword": _confirmPasswordController.text,
-            "emailAddress": _emailController.text,
-            "firstName": _firstameController.text,
-            "lastName": _lastameController.text,
-            "password": _passwordController.text,
-            "phoneNumber": _phoneController.text,
-            "profilePhotoUrl": base64Image,
-            "role": fixedrole,
-            // "securityKey": null,
-          };
-          var response = await networkHandler
-              .post("/api/user/signup", data)
-              .timeout(Duration(seconds: 120), onTimeout: () {
-            setState(() {
-              show(
-                  context,
-                  "Poor network connection",
-                  'The connection has timed out, please try again!',
-                  Icon(Icons.restore));
-              progressDialog.dismiss();
-              Navigator.pop(context);
-            });
-            throw TimeoutException(
-                'The connection has timed out, please try again');
-          });
-
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            print("Registered successfully!");
-            show(context, "Successful", "Registration was successful",
-                Icon(Icons.notifications_active_sharp));
-
-            setState(() {
-              isLoading = false;
-              progressDialog.dismiss();
-              Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                  (route) => false);
-              successBottomSheet(context);
-              return response;
-            });
-          } else {
-            setState(() {
-              validate = false;
-              isLoading = false;
-              progressDialog.dismiss();
-              Navigator.pop(context);
-              print("failed to register");
-              print(response.statusCode.toString());
-              print(response.body);
-              show(
-                  context,
-                  "Unsuccessful",
-                  "Failed to register" + response.statusCode.toString(),
-                  Icon(Icons.error));
-            });
-          }
-          break;
-        case DataConnectionStatus.disconnected:
-          setState(() {
-            isLoading = false;
-            progressDialog.dismiss();
-            Navigator.pop(context);
-            show(context, "Error!", "Check your network connection.",
-                Icon(Icons.error));
-            print('Check your network connection.');
-          });
-          break;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() {
+          Navigator.pop(context);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => LoginPage()),
+            (route) => false);
+        successBottomSheet(context);
+        });
+        
+      } else {
+        setState(() {
+          Navigator.pop(context);
+          print("failed to register");
+          print(response.statusCode.toString());
+          print(response.body);
+          _showSnackBar("Registration failed", Colors.red[900], Icons.error);
+        });
       }
-    });
-    await Future.delayed(Duration(seconds: 30));
-    await listener.cancel();
+    } else {
+      print("No internet connection");
+      _showSnackBar(
+          "No network connection", Colors.red[900], Icons.network_check);
+      showInfo();
+    }
   }
 }
